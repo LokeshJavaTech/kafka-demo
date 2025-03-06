@@ -1,6 +1,9 @@
 package com.lokesh.kafka_producer.service;
 
+import com.lokesh.kafka_producer.event.EmployeeCreateEvent;
 import com.lokesh.kafka_producer.model.Employee;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -11,6 +14,9 @@ public class EmployeeService {
 
     private List<Employee> employeeList;
 
+    @Autowired
+    private KafkaTemplate<String, EmployeeCreateEvent> kafkaTemplate;
+
     EmployeeService(){
         this.employeeList = new ArrayList<>();
     }
@@ -18,6 +24,11 @@ public class EmployeeService {
     public Employee createEmployee(Employee employee) {
         employee.setId(generateId());
         employeeList.add(employee);
+
+        EmployeeCreateEvent employeeCreateEvent = new EmployeeCreateEvent(employee.getId(), employee.getName());
+        kafkaTemplate.send("create-employee-topic", employeeCreateEvent);
+        System.out.println("On topic: create-employee-topic, send event: "+employeeCreateEvent);
+
         return employee;
     }
 
